@@ -138,22 +138,17 @@
 
     if (form && dialog) {
       form.addEventListener("submit", (e) => {
-        // Prevent default form submission
         e.preventDefault();
         
-        // Get form data
         const formData = new FormData(form);
         
-        // Submit form via fetch API
         fetch('/', {
           method: 'POST',
           body: formData
         })
         .then(response => {
-          // Close dialog after submission
           dialog.close();
           
-          // Reload the page with a timestamp to prevent caching
           window.location.href = '/?t=' + new Date().getTime();
         })
         .catch(error => {
