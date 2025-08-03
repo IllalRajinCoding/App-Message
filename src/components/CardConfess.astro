@@ -1,0 +1,110 @@
+---
+import { db, Confess } from "astro:db";
+const confessions = await db.select().from(Confess);
+const itemsPerPage = 3;
+const totalPages = Math.ceil(confessions.length / itemsPerPage);
+---
+
+<div class="space-y-8">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8" id="confessions-container">
+    {confessions.map(({ name, to, message }, index) => (
+      <div class="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden confession-card" data-page={Math.floor(index / itemsPerPage) + 1} style={index >= itemsPerPage ? "display: none;" : ""}>
+        <div class="p-8 w-full">
+          <div class="uppercase tracking-wide text-sm text-indigo-500 font-semibold mb-4">
+            Confess
+          </div>
+          <p class="block mt-1 text-lg leading-tight font-medium text-white">
+            From: <span class="text-indigo-200 font-normal">{name}</span>
+          </p>
+          <p class="mt-2 text-indigo-300">
+            To: <span class="text-indigo-100 font-normal">{to}</span>
+          </p>
+          <p class="mt-2 text-indigo-300">
+            Message: <span class="text-white font-normal">{message}</span>
+          </p>
+
+          <div class="mt-6 flex justify-end">
+            <button class="flex items-center space-x-1 text-indigo-300 hover:text-pink-400 transition-colors duration-200">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </svg>
+              <span>Suka</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  {totalPages > 1 && (
+    <div class="flex justify-center space-x-2" id="pagination">
+      {Array.from({ length: totalPages }).map((_, i) => (
+        <button 
+          class={`pagination-btn w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200 ${i === 0 ? 'bg-indigo-600 text-white' : 'bg-white/10 text-indigo-300 hover:bg-indigo-600 hover:text-white'}`}
+          data-page={i + 1}
+        >
+          {i + 1}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const paginationButtons = document.querySelectorAll('.pagination-btn');
+    const confessionCards = document.querySelectorAll('.confession-card');
+    const itemsPerPage = 3;
+    let currentPage = 1;
+    
+    // Function to show cards for the selected page
+    function showPage(page : any) {
+      currentPage = page;
+      
+      // Hide all cards
+      confessionCards.forEach(card => {
+        (card as HTMLElement).style.display = 'none';
+      });
+      
+      const startIndex = (page - 1) * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, confessionCards.length);
+      
+      for (let i = startIndex; i < endIndex; i++) {
+        if (confessionCards[i]) {
+          (confessionCards[i] as HTMLElement).style.display = 'block';
+        }
+      }
+      
+      // Update active state for pagination buttons
+      paginationButtons.forEach(btn => {
+        const pageAttr = (btn as HTMLElement).dataset.page;
+        if (parseInt(pageAttr!) === page) {
+          btn.classList.add('bg-indigo-600', 'text-white');
+          btn.classList.remove('bg-white/10', 'text-indigo-300');
+        } else {
+          btn.classList.remove('bg-indigo-600', 'text-white');
+          btn.classList.add('bg-white/10', 'text-indigo-300');
+        }
+      });
+    }
+    
+    // Add click event listeners to pagination buttons
+    paginationButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const page = parseInt((btn as HTMLElement).dataset.page!);
+        showPage(page);
+      });
+    });
+  });
+</script>
