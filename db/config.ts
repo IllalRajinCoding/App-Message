@@ -1,4 +1,4 @@
-import { defineDb, defineTable, column } from "astro:db";
+import { defineDb, defineTable, column, NOW } from "astro:db";
 
 const Confess = defineTable({
   columns: {
@@ -6,7 +6,8 @@ const Confess = defineTable({
     name: column.text(),
     to: column.text(),
     message: column.text(),
-    likes: column.number({ default: 0 }),
+    like: column.number({ default: 0 }),
+    create_at: column.date({default: NOW})
   },
 });
 
