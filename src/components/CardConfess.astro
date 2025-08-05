@@ -3,11 +3,12 @@ import { db, Confess } from "astro:db";
 const confessions = await db.select().from(Confess);
 const itemsPerPage = 3;
 const totalPages = Math.ceil(confessions.length / itemsPerPage);
+const totalLikes = await db.update(Confess).set({ likes: db.sql`like + 1` });
 ---
 
 <div class="space-y-8">
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8" id="confessions-container">
-    {confessions.map(({ name, to, message }, index) => (
+    {confessions.map(({ name, to, message, like}, index) => (
       <div class="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden confession-card" data-page={Math.floor(index / itemsPerPage) + 1} style={index >= itemsPerPage ? "display: none;" : ""}>
         <div class="p-8 w-full">
           <div class="uppercase tracking-wide text-sm text-indigo-500 font-semibold mb-4">
@@ -39,7 +40,6 @@ const totalPages = Math.ceil(confessions.length / itemsPerPage);
                   d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                 />
               </svg>
-              <span>Like</span>
             </button>
           </div>
         </div>
@@ -68,11 +68,9 @@ const totalPages = Math.ceil(confessions.length / itemsPerPage);
     const itemsPerPage = 3;
     let currentPage = 1;
     
-    // Function to show cards for the selected page
     function showPage(page : any) {
       currentPage = page;
       
-      // Hide all cards
       confessionCards.forEach(card => {
         (card as HTMLElement).style.display = 'none';
       });
@@ -86,7 +84,6 @@ const totalPages = Math.ceil(confessions.length / itemsPerPage);
         }
       }
       
-      // Update active state for pagination buttons
       paginationButtons.forEach(btn => {
         const pageAttr = (btn as HTMLElement).dataset.page;
         if (parseInt(pageAttr!) === page) {
@@ -99,7 +96,6 @@ const totalPages = Math.ceil(confessions.length / itemsPerPage);
       });
     }
     
-    // Add click event listeners to pagination buttons
     paginationButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         const page = parseInt((btn as HTMLElement).dataset.page!);

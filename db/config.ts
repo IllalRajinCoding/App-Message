@@ -6,7 +6,7 @@ const Confess = defineTable({
     name: column.text(),
     to: column.text(),
     message: column.text(),
-    like: column.number({ default: 0 }),
+    likes: column.number({ default: 0 }),
   },
 });
 
