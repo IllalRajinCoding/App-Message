@@ -3,6 +3,7 @@ import Layout from "../layouts/Layout.astro";
 import CardConfess from "../components/CardConfess.astro";
 import RencentCard from "../components/RencentCard.astro";
 import Modal from "../components/Modal.astro";
+import SearchInfo from "../components/SearchInfo.astro";
 
 import { db, Confess } from "astro:db";
 
@@ -23,6 +24,9 @@ if (Astro.request.method === "POST") {
 ---
 
 <Layout>
+  <!-- Navbar -->
+    <SearchInfo />
+
   <!-- Hero Section -->
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
     <div class="text-center">
@@ -34,6 +38,12 @@ if (Astro.request.method === "POST") {
         world.
       </p>
       <div class="mt-8">
+        <button
+          id="open-modal"
+        
+          class="bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-indigo-500 transition duration-200"
+        > <a href="/browse">Share a Confession</a>
+        </button>
         <Modal />
       </div>
     </div>

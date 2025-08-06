@@ -1,2 +1,7 @@
 @import "tailwindcss";
 
+.reenie-beanie-regular {
+  font-family: "Reenie Beanie", cursive;
+  font-weight: 200;
+  font-style: normal;
+}

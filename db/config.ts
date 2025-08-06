@@ -6,11 +6,20 @@ const Confess = defineTable({
     name: column.text(),
     to: column.text(),
     message: column.text(),
-    like: column.number({ default: 0 }),
-    create_at: column.date({default: NOW})
+    create_at: column.date({ default: NOW }),
+  },
+});
+
+const likesMessage = defineTable({
+  columns: {
+    confess_id: column.number({
+      primaryKey: true,
+      references: () => Confess.columns.id,
+    }),
+    likes: column.number({ default: 0 }),
   },
 });
 
 export default defineDb({
-  tables: { Confess },
+  tables: { Confess, likesMessage },
 });
