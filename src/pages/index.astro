@@ -3,22 +3,48 @@ import Layout from "../layouts/Layout.astro";
 import CardConfess from "../components/CardConfess.astro";
 import RencentCard from "../components/RencentCard.astro";
 import Modal from "../components/Modal.astro";
+import { database } from "../lib/firebase";
+import { ref, set } from "firebase/database";
 
-import { db, Confess } from "astro:db";
-
-if (Astro.request.method === "POST") {
-  const formData = await Astro.request.formData();
-  const name = formData.get("name") || "Anonymous";
-  const to = formData.get("to");
-  const message = formData.get("message");
-  if (
-    typeof name === "string" &&
-    typeof to === "string" &&
-    typeof message === "string"
-  ) {
-    await db.insert(Confess).values({ name, to, message });
+// Handle form submissions
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    
+    const userId = crypto.randomUUID();
+    const name = formData.get('name')?.toString() || 'Anonymous';
+    const to = formData.get('to')?.toString() || '';
+    const message = formData.get('message')?.toString() || '';
+    const songID = formData.get('songID')?.toString() || '';
+    const songName = formData.get('songName')?.toString() || '';
+    const create_At = new Date().toISOString();
+    
+    // Call the WriteConfession function
+    const data = database;
+    set(ref(data, 'users/' + userId), {
+      name,
+      to,
+      message,
+      songID,
+      songName,
+      create_At
+    });
+    
+    return Astro.redirect('/?success=true');
+  } catch (error) {
+    console.error('Error submitting form:', error);
   }
-  return Astro.redirect("/");
+}
+
+function WriteConfession(userId, name, to, message, songID, create_At){
+  const data = database;
+  set(ref(data, 'users/' + userId), {
+    name,
+    to,
+    message,
+    songID,
+    create_At
+  });
 }
 ---
 
@@ -36,7 +62,7 @@ if (Astro.request.method === "POST") {
         <Modal client:load />
         <button
           class="border hover:bg-violet-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 m-2"
-          ><a href="/browse">Explore Confessions</a></button
+          ><a href="/explore">Explore Confessions</a></button
         >
       </div>
     </div>

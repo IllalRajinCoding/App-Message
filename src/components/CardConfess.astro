@@ -1,36 +1,82 @@
 ---
-import { db, Confess } from "astro:db";
-const confessions = await db.select().from(Confess);
-const itemsPerPage = 3;
+import { database } from "../lib/firebase";
+import { ref, get, query, orderByChild, limitToLast } from "firebase/database";
+
+// Fetch data from Firebase instead of Astro DB
+const dbRef = ref(database, 'users');
+const dataQuery = query(dbRef, orderByChild('create_At'), limitToLast(20));
+const snapshot = await get(dataQuery);
+
+let confessions = [];
+if (snapshot.exists()) {
+  // Convert Firebase data to array and sort by creation date (newest first)
+  confessions = Object.entries(snapshot.val()).map(([id, data]) => ({
+    id,
+    ...data
+  })).sort((a, b) => new Date(b.create_At) - new Date(a.create_At));
+}
+
+const itemsPerPage = 6; // Increased from 3
 const totalPages = Math.ceil(confessions.length / itemsPerPage);
 ---
 
-<div class="space-y-8">
+<div class="space-y-12">
   <div
-    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8"
+    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
     id="confessions-container"
   >
     {
-      confessions.map(({ name, to, message }, index) => (
+      confessions.map(({ id, name, to, message, songID, songName }, index) => (
         <div
-          class="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden confession-card"
+          class="bg-gradient-to-br from-indigo-900/40 to-violet-900/40 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg shadow-indigo-900/20 hover:shadow-indigo-700/30 transition-all duration-300 border border-indigo-500/20 confession-card group"
           data-page={Math.floor(index / itemsPerPage) + 1}
           style={index >= itemsPerPage ? "display: none;" : ""}
         >
-          <div class="p-8 w-full">
-
-            <p class="block mt-1 text-lg leading-tight font-medium text-white">
-              From: <span class="text-indigo-200 font-normal">{name}</span>
-            </p>
-            <p class="mt-2 text-indigo-300">
-              To: <span class="text-indigo-100 font-normal">{to}</span>
-            </p>
-            <p class="mt-2 text-indigo-300">
-              Message:
-            </p>
-            <span class="text-white reenie-beanie-regular text-3xl">{message}</span>
-            <div class="mt-6 flex justify-end">
-              <button class="flex items-center space-x-1 text-indigo-300 hover:text-pink-400 transition-colors duration-200">
+          <div class="p-6 w-full h-full flex flex-col">
+            <div class="flex justify-between items-start mb-4">
+              <div class="uppercase tracking-wide text-xs font-bold bg-indigo-600/70 text-white px-3 py-1 rounded-full">
+                Confession
+              </div>
+              <div class="text-xs text-indigo-300 opacity-60">
+                {new Date(confessions[index].create_At).toLocaleDateString()}
+              </div>
+            </div>
+            
+            <div class="space-y-4 grow">
+              <p class="text-lg leading-tight font-medium text-white">
+                From: <span class="text-indigo-200 font-normal">{name}</span>
+              </p>
+              <p class="text-indigo-300">
+                To: <span class="text-indigo-100 font-semibold">{to}</span>
+              </p>
+              <div>
+                <p class="text-indigo-300 mb-1">Message:</p>
+                <p class="text-white text-lg leading-relaxed">{message}</p>
+              </div>
+            </div>
+            
+            {songName && (
+              <div class="mt-4 py-3 px-4 rounded-lg bg-black/20 flex items-center space-x-2 border-l-4 border-violet-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-violet-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
+                </svg>
+                <div class="text-sm text-indigo-100 truncate">{songName}</div>
+                {songID && (
+                  <a 
+                    href={`https://open.spotify.com/track/${songID}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    class="ml-auto text-xs text-violet-400 hover:text-white"
+                  >
+                    Play ↗
+                  </a>
+                )}
+              </div>
+            )}
+            
+            <div class="mt-6 flex justify-between items-center">
+              <span class="text-xs text-indigo-400">#{id.substring(0, 8)}</span>
+              <button class="group-hover:scale-110 flex items-center space-x-1 text-indigo-300 hover:text-pink-400 transition-all duration-300">
                 <svg
                   class="w-5 h-5"
                   fill="none"
@@ -57,14 +103,22 @@ const totalPages = Math.ceil(confessions.length / itemsPerPage);
   {
     totalPages > 1 && (
       <div class="flex justify-center space-x-2" id="pagination">
-        {Array.from({ length: totalPages }).map((_, i) => (
-          <button
-            class={`pagination-btn w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200 ${i === 0 ? "bg-indigo-600 text-white" : "bg-white/10 text-indigo-300 hover:bg-indigo-600 hover:text-white"}`}
-            data-page={i + 1}
-          >
-            {i + 1}
-          </button>
-        ))}
+        <button id="prev-page" class="bg-indigo-800/40 hover:bg-indigo-600 text-indigo-200 hover:text-white px-4 py-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:hover:bg-indigo-800/40">
+          Previous
+        </button>
+        <div class="flex items-center space-x-2">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button
+              class={`pagination-btn w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${i === 0 ? "bg-indigo-600 text-white" : "bg-indigo-800/40 text-indigo-200 hover:bg-indigo-600 hover:text-white"}`}
+              data-page={i + 1}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+        <button id="next-page" class="bg-indigo-800/40 hover:bg-indigo-600 text-indigo-200 hover:text-white px-4 py-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:hover:bg-indigo-800/40">
+          Next
+        </button>
       </div>
     )
   }
@@ -74,10 +128,18 @@ const totalPages = Math.ceil(confessions.length / itemsPerPage);
   document.addEventListener("DOMContentLoaded", () => {
     const paginationButtons = document.querySelectorAll(".pagination-btn");
     const confessionCards = document.querySelectorAll(".confession-card");
-    const itemsPerPage = 3;
+    const prevButton = document.getElementById("prev-page");
+    const nextButton = document.getElementById("next-page");
+    const itemsPerPage = 6; // Make sure this matches the server-side value
     let currentPage = 1;
+    const totalPages = Math.ceil(confessionCards.length / itemsPerPage);
 
-    function showPage(page: any) {
+    function updateButtonStates() {
+      if (prevButton) prevButton.disabled = currentPage === 1;
+      if (nextButton) nextButton.disabled = currentPage === totalPages;
+    }
+
+    function showPage(page) {
       currentPage = page;
 
       confessionCards.forEach((card) => {
@@ -85,10 +147,7 @@ const totalPages = Math.ceil(confessions.length / itemsPerPage);
       });
 
       const startIndex = (page - 1) * itemsPerPage;
-      const endIndex = Math.min(
-        startIndex + itemsPerPage,
-        confessionCards.length
-      );
+      const endIndex = Math.min(startIndex + itemsPerPage, confessionCards.length);
 
       for (let i = startIndex; i < endIndex; i++) {
         if (confessionCards[i]) {
@@ -100,12 +159,14 @@ const totalPages = Math.ceil(confessions.length / itemsPerPage);
         const pageAttr = (btn as HTMLElement).dataset.page;
         if (parseInt(pageAttr!) === page) {
           btn.classList.add("bg-indigo-600", "text-white");
-          btn.classList.remove("bg-white/10", "text-indigo-300");
+          btn.classList.remove("bg-indigo-800/40", "text-indigo-200");
         } else {
           btn.classList.remove("bg-indigo-600", "text-white");
-          btn.classList.add("bg-white/10", "text-indigo-300");
+          btn.classList.add("bg-indigo-800/40", "text-indigo-200");
         }
       });
+
+      updateButtonStates();
     }
 
     paginationButtons.forEach((btn) => {
@@ -114,5 +175,23 @@ const totalPages = Math.ceil(confessions.length / itemsPerPage);
         showPage(page);
       });
     });
+
+    if (prevButton) {
+      prevButton.addEventListener("click", () => {
+        if (currentPage > 1) {
+          showPage(currentPage - 1);
+        }
+      });
+    }
+
+    if (nextButton) {
+      nextButton.addEventListener("click", () => {
+        if (currentPage < totalPages) {
+          showPage(currentPage + 1);
+        }
+      });
+    }
+
+    updateButtonStates();
   });
 </script>

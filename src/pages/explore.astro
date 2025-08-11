@@ -1,14 +1,232 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { database } from "../lib/firebase";
+import { ref, get } from "firebase/database";
+
+// Fetch all data from Firebase
+const dbRef = ref(database, 'users');
+const snapshot = await get(dbRef);
+
+let confessions = [];
+if (snapshot.exists()) {
+  // Convert Firebase data to array and sort by creation date (newest first)
+  confessions = Object.entries(snapshot.val()).map(([id, data]) => ({
+    id,
+    ...data
+  })).sort((a, b) => new Date(b.create_At) - new Date(a.create_At));
+}
 ---
 
 <Layout>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         <div>
-            <h2 class="text-2xl md:text-3xl font-bold text-white mb-8 text-center">
-                Browse Confessions
-            </h2>
-        </div>
+            <h1 class="text-3xl md:text-4xl font-bold text-white mb-4 text-center">
+                Explore Confessions
+            </h1>
+            <p class="text-center text-indigo-300 max-w-2xl mx-auto mb-10">
+                Browse through all confessions or search by recipient to find the ones you're looking for.
+            </p>
 
+            <!-- Search Bar -->
+            <div class="max-w-xl mx-auto mb-12">
+                <div class="relative">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-4 pointer-events-none">
+                        <svg class="w-4 h-4 text-indigo-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                        </svg>
+                    </div>
+                    <input 
+                        type="search" 
+                        id="confession-search" 
+                        class="block w-full p-4 ps-12 bg-white/5 border border-indigo-500/30 rounded-xl placeholder-indigo-300/70 text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        placeholder="Search by recipient name..." 
+                    />
+                    <button 
+                        type="button" 
+                        id="clear-search" 
+                        class="absolute end-2.5 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300 font-medium rounded-lg text-sm px-4 py-2 hidden"
+                    >
+                        Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Status message -->
+            <div id="search-status" class="text-center text-indigo-300 mb-8 hidden">
+                Showing results for "<span id="search-term"></span>"
+            </div>
+
+            <!-- Results counter -->
+            <div class="text-right mb-4 text-sm text-indigo-400">
+                <span id="results-count">{confessions.length}</span> confessions found
+            </div>
+
+            <!-- No results message -->
+            <div id="no-results" class="text-center py-16 hidden">
+                <div class="text-2xl text-indigo-300 mb-2">No confessions found</div>
+                <p class="text-indigo-400">Try searching with a different name or clear the search</p>
+            </div>
+
+            <!-- Confessions Grid -->
+            <div
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                id="confessions-container"
+            >
+                {confessions.map(({ id, name, to, message, songID, songName, create_At }) => (
+                    <div
+                        class="bg-gradient-to-br from-indigo-900/40 to-violet-900/40 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg shadow-indigo-900/20 hover:shadow-indigo-700/30 transition-all duration-300 border border-indigo-500/20 confession-card"
+                        data-to={to?.toLowerCase()}
+                    >
+                        <div class="p-6 w-full h-full flex flex-col">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="uppercase tracking-wide text-xs font-bold bg-indigo-600/70 text-white px-3 py-1 rounded-full">
+                                    Confession
+                                </div>
+                                <div class="text-xs text-indigo-300 opacity-60">
+                                    {new Date(create_At).toLocaleDateString()}
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-4 grow">
+                                <p class="text-lg leading-tight font-medium text-white">
+                                    From: <span class="text-indigo-200 font-normal">{name}</span>
+                                </p>
+                                <p class="text-indigo-300">
+                                    To: <span class="text-indigo-100 font-semibold">{to}</span>
+                                </p>
+                                <div>
+                                    <p class="text-indigo-300 mb-1">Message:</p>
+                                    <p class="text-white text-lg leading-relaxed">{message}</p>
+                                </div>
+                            </div>
+                            
+                            {songName && (
+                                <div class="mt-4 py-3 px-4 rounded-lg bg-black/20 flex items-center space-x-2 border-l-4 border-violet-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-violet-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
+                                    </svg>
+                                    <div class="text-sm text-indigo-100 truncate">{songName}</div>
+                                    {songID && (
+                                        <a 
+                                            href={`https://open.spotify.com/track/${songID}`} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            class="ml-auto text-xs text-violet-400 hover:text-white"
+                                        >
+                                            Play ↗
+                                        </a>
+                                    )}
+                                </div>
+                            )}
+                            
+                            <div class="mt-6 flex justify-between items-center">
+                                <span class="text-xs text-indigo-400">#{id.substring(0, 8)}</span>
+                                <button class="flex items-center space-x-1 text-indigo-300 hover:text-pink-400 transition-all duration-200">
+                                    <svg
+                                        class="w-5 h-5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                                        />
+                                    </svg>
+                                    <span class="text-sm font-medium">like</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
     </div>
 </Layout>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('confession-search');
+        const clearButton = document.getElementById('clear-search');
+        const confessionCards = document.querySelectorAll('.confession-card');
+        const searchStatus = document.getElementById('search-status');
+        const searchTerm = document.getElementById('search-term');
+        const resultsCount = document.getElementById('results-count');
+        const noResults = document.getElementById('no-results');
+        const confessionsContainer = document.getElementById('confessions-container');
+
+        // Function to filter confessions by recipient
+        function filterConfessions(query) {
+            query = query.trim().toLowerCase();
+            let visibleCount = 0;
+
+            confessionCards.forEach(card => {
+                const toValue = (card as HTMLElement).dataset.to || '';
+                const isMatch = toValue.includes(query);
+                
+                (card as HTMLElement).style.display = isMatch || query === '' ? 'block' : 'none';
+                
+                if (isMatch || query === '') {
+                    visibleCount++;
+                }
+            });
+
+            // Update results count
+            if (resultsCount) {
+                resultsCount.textContent = visibleCount.toString();
+            }
+
+            // Show/hide search status
+            if (searchStatus && searchTerm) {
+                if (query !== '') {
+                    searchStatus.classList.remove('hidden');
+                    searchTerm.textContent = query;
+                } else {
+                    searchStatus.classList.add('hidden');
+                }
+            }
+
+            // Show no results message if needed
+            if (noResults && confessionsContainer) {
+                if (visibleCount === 0) {
+                    noResults.classList.remove('hidden');
+                    confessionsContainer.classList.add('hidden');
+                } else {
+                    noResults.classList.add('hidden');
+                    confessionsContainer.classList.remove('hidden');
+                }
+            }
+
+            // Show/hide clear button
+            if (clearButton) {
+                if (query !== '') {
+                    clearButton.classList.remove('hidden');
+                } else {
+                    clearButton.classList.add('hidden');
+                }
+            }
+        }
+
+        // Set up search input event
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const query = (e.target as HTMLInputElement).value;
+                filterConfessions(query);
+            });
+        }
+
+        // Set up clear button
+        if (clearButton) {
+            clearButton.addEventListener('click', () => {
+                if (searchInput) {
+                    (searchInput as HTMLInputElement).value = '';
+                    filterConfessions('');
+                    searchInput.focus();
+                }
+            });
+        }
+    });
+</script>

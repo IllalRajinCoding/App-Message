@@ -1,6 +1,5 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 import { getDatabase } from "firebase/database"; // Tambahkan import untuk database
 
 // TODO: Add SDKs for Firebase products that you want to use
@@ -19,9 +18,7 @@ const firebaseConfig = {
   measurementId: "G-BVLE4YKNSX"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const database = getDatabase(app); // Inisialisasi database
+const database = getDatabase(app);
 
-export { app, analytics, database }; // Export database
+export { app, database };
