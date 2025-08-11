@@ -7,6 +7,7 @@ const Confess = defineTable({
     to: column.text(),
     message: column.text(),
     create_at: column.date({ default: NOW }),
+    song : column.text({ default: "" }),
   },
 });
 

@@ -1,0 +1,23 @@
+---
+interface Props {
+  trackId: string;
+  height?: number;
+  width?: string;
+}
+
+const { trackId, height = 152, width = "100%" } = Astro.props;
+---
+
+{trackId && (
+  <div class="mt-4 bg-black/20 p-2 rounded-lg">
+    <iframe
+      src={`https://open.spotify.com/embed/track/${trackId}?utm_source=generator`}
+      width={width}
+      height={height}
+      allowfullscreen=""
+      allow="clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+      loading="lazy"
+      class="rounded-lg"
+    ></iframe>
+  </div>
+)}

@@ -3,7 +3,6 @@ import Layout from "../layouts/Layout.astro";
 import CardConfess from "../components/CardConfess.astro";
 import RencentCard from "../components/RencentCard.astro";
 import Modal from "../components/Modal.astro";
-import SearchInfo from "../components/SearchInfo.astro";
 
 import { db, Confess } from "astro:db";
 
@@ -24,27 +23,21 @@ if (Astro.request.method === "POST") {
 ---
 
 <Layout>
-  <!-- Navbar -->
-    <SearchInfo />
-
-  <!-- Hero Section -->
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
     <div class="text-center">
-      <h1 class="text-4xl md:text-6xl font-bold text-white mb-6 tracking-tight">
-        Secret <span class="text-indigo-400">Message</span>
+      <h1 class="text-4xl md:text-6xl text-zinc-100 mb-6 reenie-beanie-regular">
+        Share Your <span class="text-violet-400">Feelings with a Song</span>
       </h1>
-      <p class="text-xl md:text-2xl text-indigo-200 max-w-3xl mx-auto mb-10">
+      <p class="text-xl md:text-2xl text-zinc-300 max-w-3xl mx-auto mb-10">
         Share your thoughts, feelings, and confessions anonymously with the
         world.
       </p>
       <div class="mt-8">
+        <Modal client:load />
         <button
-          id="open-modal"
-        
-          class="bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-indigo-500 transition duration-200"
-        > <a href="/browse">Share a Confession</a>
-        </button>
-        <Modal />
+          class="border hover:bg-violet-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 m-2"
+          ><a href="/browse">Explore Confessions</a></button
+        >
       </div>
     </div>
   </div>

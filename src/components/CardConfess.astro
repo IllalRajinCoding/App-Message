@@ -18,9 +18,7 @@ const totalPages = Math.ceil(confessions.length / itemsPerPage);
           style={index >= itemsPerPage ? "display: none;" : ""}
         >
           <div class="p-8 w-full">
-            <div class="uppercase tracking-wide text-sm text-indigo-500 font-semibold mb-4">
-              Confess
-            </div>
+
             <p class="block mt-1 text-lg leading-tight font-medium text-white">
               From: <span class="text-indigo-200 font-normal">{name}</span>
             </p>
@@ -28,9 +26,9 @@ const totalPages = Math.ceil(confessions.length / itemsPerPage);
               To: <span class="text-indigo-100 font-normal">{to}</span>
             </p>
             <p class="mt-2 text-indigo-300">
-              Message: <span class="text-white reenie-beanie-regular">{message}</span>
+              Message:
             </p>
-
+            <span class="text-white reenie-beanie-regular text-3xl">{message}</span>
             <div class="mt-6 flex justify-end">
               <button class="flex items-center space-x-1 text-indigo-300 hover:text-pink-400 transition-colors duration-200">
                 <svg
